@@ -14,10 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Supabase CLI
-        run: |
-          npm install --global supabase@latest
-          supabase --version
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Push migrations
         env:
