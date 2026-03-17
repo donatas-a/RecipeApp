@@ -5,24 +5,30 @@ on:
     branches: [ main ]
     paths:
       - "supabase/migrations/**"
+  workflow_dispatch:
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v5
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      - name: Install Supabase CLI (standalone binary)
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
+          tar -xzf supabase.tar.gz
+          sudo mv supabase /usr/local/bin/supabase
+          supabase --version
 
       - name: Push migrations
         env:
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_REF}.supabase.co:5432/postgres?sslmode=require"
-          supabase db push --db-url "$DB_URL"
+          set -euo pipefail
+          : "${SUPABASE_DB_URL:?Missing GitHub secret SUPABASE_DB_URL}"
+          supabase db push --db-url "$SUPABASE_DB_URL"
