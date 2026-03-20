@@ -7,10 +7,6 @@ on:
       - "supabase/migrations/**"
   workflow_dispatch:
 
-concurrency:
-  group: supabase-migrations-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -21,16 +17,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Verify required secret
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      - name: Install Supabase CLI (standalone binary)
         run: |
           set -euo pipefail
-          : "${SUPABASE_DB_URL:?Missing GitHub secret SUPABASE_DB_URL}"
+          curl -fsSL "https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
+          tar -xzf supabase.tar.gz
+          sudo mv supabase /usr/local/bin/supabase
+          supabase --version
 
       - name: Push migrations
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
-          npx --yes supabase@latest db push --db-url "$SUPABASE_DB_URL"
+          : "${SUPABASE_DB_URL:?Missing GitHub secret SUPABASE_DB_URL}"
+          supabase db push --db-url "$SUPABASE_DB_URL"
