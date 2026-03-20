@@ -14,3 +14,13 @@ PostgreSQL schema for Recipe App.
 
 ## Apply migrations locally
 psql $DATABASE_URL -f db/migrations/0001_init.sql
+
+## GitHub Actions migrations
+
+The CI workflow reads `SUPABASE_DB_URL` from a GitHub Actions secret and runs:
+
+```bash
+supabase db push --db-url "$SUPABASE_DB_URL"
+```
+
+When configuring that secret for GitHub-hosted runners, use the **Supavisor pooler** connection string from the Supabase dashboard rather than the direct database host (`db.<project-ref>.supabase.co:5432`). The direct host often resolves to IPv6 and can fail from GitHub Actions with `network is unreachable`.
