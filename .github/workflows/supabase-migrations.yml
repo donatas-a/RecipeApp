@@ -3,9 +3,10 @@ run-name: Supabase DB Migrations (${{ github.sha }})
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - "supabase/migrations/**"
+      - ".github/workflows/supabase-migrations.yml"
   workflow_dispatch:
 
 jobs:
@@ -14,18 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v5
 
-      - name: Install Supabase CLI (standalone binary)
-        run: |
-          set -euo pipefail
-          curl -fsSL "https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz" -o supabase.tar.gz
-          tar -xzf supabase.tar.gz
-          sudo mv supabase /usr/local/bin/supabase
-          supabase --version
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.39.2
+
+      - name: Verify Supabase CLI
+        run: supabase --version
 
       - name: Push migrations
         env:
