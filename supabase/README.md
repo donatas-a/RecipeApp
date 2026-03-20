@@ -24,5 +24,3 @@ supabase db push --db-url "$SUPABASE_DB_URL"
 ```
 
 When configuring that secret for GitHub-hosted runners, use the **Supavisor pooler** connection string from the Supabase dashboard rather than the direct database host (`db.<project-ref>.supabase.co:5432`). The direct host often resolves to IPv6 and can fail from GitHub Actions with `network is unreachable`.
-
-If CI detects the direct host, the workflow now emits a warning and skips the migration push so the rest of the pipeline can continue. Update `SUPABASE_DB_URL` to the pooler URL to re-enable automatic migrations.
