@@ -1,32 +1,44 @@
 name: Supabase DB Migrations
+run-name: Supabase DB Migrations (${{ github.sha }})
 
 on:
   push:
     branches: [ main ]
     paths:
       - "supabase/migrations/**"
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-migrations-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   migrate:
+    name: Push Supabase migrations via DB URL
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Link project
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      - name: Show workflow mode
         run: |
-          supabase login --token "$SUPABASE_ACCESS_TOKEN"
-          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          echo "Workflow commit: $GITHUB_SHA"
+          echo "Auth mode: SUPABASE_DB_URL"
+          echo "Legacy supabase login/link steps are not used in this workflow version."
+
+      - name: Verify required secret
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          : "${SUPABASE_DB_URL:?Missing GitHub secret SUPABASE_DB_URL}"
 
       - name: Push migrations
         env:
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: supabase db push
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          npx --yes supabase@latest db push --db-url "$SUPABASE_DB_URL"
