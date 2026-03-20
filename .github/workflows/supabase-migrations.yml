@@ -2,6 +2,10 @@ name: Supabase DB Migrations
 run-name: Supabase DB Migrations (${{ github.sha }})
 
 on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/supabase-migrations.yml"
   push:
     branches: [main]
     paths:
@@ -10,14 +14,72 @@ on:
   workflow_dispatch:
 
 jobs:
-  migrate:
-    name: Push Supabase migrations via DB URL
+  validate:
+    name: Validate Supabase migrations
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.39.2
+
+      - name: Verify Supabase CLI
+        run: supabase --version
+
+      - name: Validate migration filenames and transaction wrappers
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          files=(supabase/migrations/*.sql)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::No SQL migrations were found in supabase/migrations."
+            exit 1
+          fi
+
+          for file in "${files[@]}"; do
+            base="$(basename "$file")"
+
+            if [[ ! "$base" =~ ^[0-9]{4}_[a-z0-9_]+\.sql$ ]]; then
+              echo "::error file=$file::Migration filenames must match ####_description.sql."
+              exit 1
+            fi
+
+            if [[ "$base" == *test* ]]; then
+              echo "::error file=$file::Test/temporary migrations should not be deployed from this workflow. Remove or rename this file before pushing to Supabase."
+              exit 1
+            fi
+
+            first_statement="$(awk 'NF && $0 !~ /^--/ { print; exit }' "$file")"
+            last_statement="$(awk 'NF && $0 !~ /^--/ { line=$0 } END { print line }' "$file")"
+
+            if [[ "$first_statement" != "BEGIN;" ]]; then
+              echo "::error file=$file::Migration must start with BEGIN; so it runs atomically."
+              exit 1
+            fi
+
+            if [[ "$last_statement" != "COMMIT;" ]]; then
+              echo "::error file=$file::Migration must end with COMMIT; so it runs atomically."
+              exit 1
+            fi
+          done
+
+  migrate:
+    name: Push Supabase migrations via DB URL
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
