@@ -27,10 +27,36 @@ jobs:
       - name: Verify Supabase CLI
         run: supabase --version
 
-      - name: Push migrations
+      - name: Check Supabase DB URL
+        id: supabase-db-url
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
-          : "${SUPABASE_DB_URL:?Missing GitHub secret SUPABASE_DB_URL}"
+          if [ -z "${SUPABASE_DB_URL:-}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping Supabase migration push because the SUPABASE_DB_URL secret is not configured."
+            exit 0
+          fi
+
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Supabase DB URL for GitHub Actions
+        if: steps.supabase-db-url.outputs.configured == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$SUPABASE_DB_URL" =~ @db\..*\.supabase\.co:5432/ ]]; then
+            echo "::error::SUPABASE_DB_URL is using Supabase's direct database host (db.<project-ref>.supabase.co:5432), which often resolves to IPv6 and is not reachable from GitHub-hosted runners. Use the Supavisor pooler connection string from the Supabase dashboard instead."
+            exit 1
+          fi
+
+      - name: Push migrations
+        if: steps.supabase-db-url.outputs.configured == 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
           supabase db push --db-url "$SUPABASE_DB_URL"
