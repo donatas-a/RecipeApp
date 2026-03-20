@@ -1,4 +1,5 @@
 name: Supabase DB Migrations
+run-name: Supabase DB Migrations (${{ github.sha }})
 
 on:
   push:
@@ -9,6 +10,7 @@ on:
 
 jobs:
   migrate:
+    name: Push Supabase migrations via DB URL
     runs-on: ubuntu-latest
     permissions:
       contents: read
