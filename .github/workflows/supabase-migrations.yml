@@ -3,7 +3,8 @@ run-name: Supabase DB Migrations (${{ github.sha }})
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - "supabase/migrations/**"
       - ".github/workflows/supabase-migrations.yml"
@@ -16,8 +17,12 @@ jobs:
     permissions:
       contents: read
 
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -29,10 +34,9 @@ jobs:
 
       - name: Check Supabase DB URL
         id: supabase-db-url
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
+
           if [ -z "${SUPABASE_DB_URL:-}" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Skipping Supabase migration push because the SUPABASE_DB_URL secret is not configured."
@@ -43,8 +47,6 @@ jobs:
 
       - name: Validate Supabase DB URL for GitHub Actions
         if: steps.supabase-db-url.outputs.configured == 'true'
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
 
@@ -53,10 +55,11 @@ jobs:
             exit 1
           fi
 
-      - name: Push migrations
+      - name: Push migrations without login/link
         if: steps.supabase-db-url.outputs.configured == 'true'
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           set -euo pipefail
+          # Authenticate directly with the database URL so the workflow does not rely on
+          # `supabase login` + `supabase link`, which can fail with Unauthorized errors
+          # when the access token or project ref is not valid for the target project.
           supabase db push --db-url "$SUPABASE_DB_URL"
