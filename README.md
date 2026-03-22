@@ -2,31 +2,24 @@
 
 Find your meal.
 
-## Documentation
+## Frontend recipe browser
 
-- `README.md` (this file): high-level project notes.
-- `ARCHITECTURE.md`: backend + frontend architecture based on a preloaded database.
-- `API_REQUIREMENTS.md`: implementation requirements for the API component.
-- `FRONTEND_REQUIREMENTS.md`: implementation requirements and acceptance criteria for the frontend component.
-- `supabase/README.md`: database and migration notes.
+A minimal frontend app is available in `frontend/`.
 
-## Current direction
+### Run locally
 
-Because the database is already preloaded, the project should start with a **read-first MVP**:
+```bash
+cd frontend
+python3 -m http.server 4173
+```
 
-1. `GET /recipes` (search + pagination)
-2. `GET /recipes/:id` (ingredients + steps + nutrition)
-3. Frontend list/detail flows
-4. Write actions disabled for phase 1
+Then open `http://localhost:4173`.
 
-For system structure and module boundaries, see `ARCHITECTURE.md`. For delivery requirements, use `API_REQUIREMENTS.md` (API) and `FRONTEND_REQUIREMENTS.md` (frontend).
+### API expectations
 
+The UI calls:
 
-## API implementation
+- `GET /recipes?q=&locale=`
+- `GET /recipes/:id?locale=`
 
-A FastAPI-based API component is available under `backend/`.
-
-- App entrypoint: `backend/app/main.py`
-- Routes: `/api/v1/recipes`, `/api/v1/recipes/{id}`, `/api/v1/filters`, `/api/v1/health`
-- Setup/run instructions: `backend/README.md`
-
+Configure the API base URL in the page (defaults to `http://localhost:3000`).
