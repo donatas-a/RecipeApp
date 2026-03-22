@@ -17,6 +17,11 @@ That means the frontend can run immediately, but it will only show real data aft
 ### Option 1: Run the frontend locally
 
 From the repository root:
+## Frontend recipe browser
+
+A minimal frontend app is available in `frontend/`.
+
+### Run locally
 
 ```bash
 cd frontend
@@ -73,6 +78,11 @@ https://<your-codespace-name>-3000.app.github.dev
 ## What backend API the frontend expects
 
 The frontend calls these endpoints:
+Then open `http://localhost:4173`.
+
+### API expectations
+
+The UI calls:
 
 - `GET /recipes?q=&locale=`
 - `GET /recipes/:id?locale=`
@@ -92,3 +102,4 @@ http://localhost:3000/recipes/123?locale=en
 ## Important note
 
 If you only start the static frontend server, the page will load but recipe requests will fail until a real backend API is available.
+Configure the API base URL in the page (defaults to `http://localhost:3000`).
