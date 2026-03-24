@@ -5,8 +5,16 @@ const loadBtn = document.getElementById('loadBtn');
 const recipeList = document.getElementById('recipeList');
 const details = document.getElementById('details');
 
+function getDefaultApiBase() {
+  const hostMatch = window.location.host.match(/^(.*)-4173(\.app\.github\.dev)$/);
+  if (hostMatch) {
+    return `https://${hostMatch[1]}-8000${hostMatch[2]}/api/v1`;
+  }
+  return 'http://localhost:3000';
+}
+
 const localApiBase = localStorage.getItem('recipeApiBase');
-apiBaseInput.value = localApiBase || 'http://localhost:3000';
+apiBaseInput.value = localApiBase || getDefaultApiBase();
 
 let recipes = [];
 let selectedRecipeId;

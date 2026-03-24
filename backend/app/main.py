@@ -2,22 +2,25 @@ from __future__ import annotations
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import router
 from app.core.errors import APIException
 from app.core.trace import get_trace_id, trace_id_middleware
-from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI(title="RecipeApp API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://psychic-spork-655pjq9v7j5fw7j-4173.app.github.dev"],
+    allow_origins=[
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+    ],
+    allow_origin_regex=r"^https://.*-4173\.app\.github\.dev$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-
-
-app = FastAPI(title="RecipeApp API", version="0.1.0")
+)
 app.middleware("http")(trace_id_middleware)
 app.include_router(router)
 
