@@ -2,31 +2,104 @@
 
 Find your meal.
 
-## Documentation
+## What is in this repository?
 
-- `README.md` (this file): high-level project notes.
-- `ARCHITECTURE.md`: backend + frontend architecture based on a preloaded database.
-- `API_REQUIREMENTS.md`: implementation requirements for the API component.
-- `FRONTEND_REQUIREMENTS.md`: implementation requirements and acceptance criteria for the frontend component.
-- `supabase/README.md`: database and migration notes.
+This repository currently contains:
 
-## Current direction
+- a static frontend in `frontend/`
+- Supabase/Postgres schema files in `supabase/`
 
-Because the database is already preloaded, the project should start with a **read-first MVP**:
+It does **not** currently contain a backend server implementation for `/recipes` and `/recipes/:id`.
+That means the frontend can run immediately, but it will only show real data after you point it at a running API.
 
-1. `GET /recipes` (search + pagination)
-2. `GET /recipes/:id` (ingredients + steps + nutrition)
-3. Frontend list/detail flows
-4. Write actions disabled for phase 1
+## How to run the application exactly
 
-For system structure and module boundaries, see `ARCHITECTURE.md`. For delivery requirements, use `API_REQUIREMENTS.md` (API) and `FRONTEND_REQUIREMENTS.md` (frontend).
+### Option 1: Run the frontend locally
 
+From the repository root:
+## Frontend recipe browser
 
-## API implementation
+A minimal frontend app is available in `frontend/`.
 
-A FastAPI-based API component is available under `backend/`.
+### Run locally
 
-- App entrypoint: `backend/app/main.py`
-- Routes: `/api/v1/recipes`, `/api/v1/recipes/{id}`, `/api/v1/filters`, `/api/v1/health`
-- Setup/run instructions: `backend/README.md`
+```bash
+cd frontend
+python3 -m http.server 4173
+```
 
+Then open this URL in your browser:
+
+```text
+http://localhost:4173
+```
+
+When the page opens:
+
+1. Find the **API Base URL** field.
+2. Enter the URL of your backend API.
+3. Click **Load Recipes**.
+
+If your API is running locally on port `3000`, use:
+
+```text
+http://localhost:3000
+```
+
+### Option 2: Run the frontend in GitHub Codespaces
+
+From the repository root inside the Codespace terminal:
+
+```bash
+cd frontend
+python3 -m http.server 4173 --bind 0.0.0.0
+```
+
+Then:
+
+1. Open the **Ports** tab in Codespaces.
+2. Make sure port `4173` is forwarded.
+3. Open the forwarded URL for port `4173`.
+4. In the app, set **API Base URL** to your backend URL.
+
+If your backend is also running inside the same Codespace on port `3000`:
+
+1. Forward port `3000` too.
+2. Copy the forwarded URL for port `3000`.
+3. Paste that URL into **API Base URL**.
+4. Click **Load Recipes**.
+
+Example backend URL in Codespaces:
+
+```text
+https://<your-codespace-name>-3000.app.github.dev
+```
+
+## What backend API the frontend expects
+
+The frontend calls these endpoints:
+Then open `http://localhost:4173`.
+
+### API expectations
+
+The UI calls:
+
+- `GET /recipes?q=&locale=`
+- `GET /recipes/:id?locale=`
+
+Example list request:
+
+```text
+http://localhost:3000/recipes?q=pasta&locale=en
+```
+
+Example details request:
+
+```text
+http://localhost:3000/recipes/123?locale=en
+```
+
+## Important note
+
+If you only start the static frontend server, the page will load but recipe requests will fail until a real backend API is available.
+Configure the API base URL in the page (defaults to `http://localhost:3000`).
