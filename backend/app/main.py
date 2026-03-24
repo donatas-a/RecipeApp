@@ -7,6 +7,15 @@ from fastapi.responses import JSONResponse
 from app.api.routes import router
 from app.core.errors import APIException
 from app.core.trace import get_trace_id, trace_id_middleware
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://psychic-spork-655pjq9v7j5fw7j-4173.app.github.dev"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+
 
 app = FastAPI(title="RecipeApp API", version="0.1.0")
 app.middleware("http")(trace_id_middleware)
