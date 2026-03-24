@@ -2,6 +2,8 @@ name: Supabase DB Migrations
 
 on:
   push:
+    branches:
+      - main
     branches: [ main ]
     paths:
       - "supabase/migrations/**"
@@ -9,6 +11,15 @@ on:
 jobs:
   migrate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
     steps:
       - uses: actions/checkout@v4
 
@@ -17,6 +28,37 @@ jobs:
         with:
           version: latest
 
+      - name: Check Supabase DB URL
+        id: supabase-db-url
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_DB_URL:-}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping Supabase migration push because the SUPABASE_DB_URL secret is not configured."
+            exit 0
+          fi
+
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Supabase DB URL for GitHub Actions
+        if: steps.supabase-db-url.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+
+          if [[ "$SUPABASE_DB_URL" =~ @db\..*\.supabase\.co:5432/ ]]; then
+            echo "::error::SUPABASE_DB_URL is using Supabase's direct database host (db.<project-ref>.supabase.co:5432), which often resolves to IPv6 and is not reachable from GitHub-hosted runners. Use the Supavisor pooler connection string from the Supabase dashboard instead."
+            exit 1
+          fi
+
+      - name: Push migrations without login/link
+        if: steps.supabase-db-url.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          # Authenticate directly with the database URL so the workflow does not rely on
+          # `supabase login` + `supabase link`, which can fail with Unauthorized errors
+          # when the access token or project ref is not valid for the target project.
+          supabase db push --db-url "$SUPABASE_DB_URL"
       - name: Link project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
