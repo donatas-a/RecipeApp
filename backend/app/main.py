@@ -17,6 +17,8 @@ app.add_middleware(
         "http://127.0.0.1:4173",
     ],
     allow_origin_regex=r"^https://.*-4173\.app\.github\.dev$",
+        "https://psychic-spork-655pjq9v7j5fw7j-4173.app.github.dev",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
